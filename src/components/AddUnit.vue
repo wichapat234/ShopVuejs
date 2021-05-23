@@ -8,7 +8,9 @@
 </template>
 
 <script>
-import {menuId} from  "../utils/constant.js";
+
+import { status } from "../utils/constant.js";
+import { unitPageId } from "../utils/constant.js"; 
 export default {
 
 data(){
@@ -25,11 +27,14 @@ methods: {
        this.axios
          .post("http://localhost:40019/Unit/Insert_Unit",this.objUnit)
          .then(response => {
-        if(response.data == "seccess"){
+        if(response.data ==  status.SUCCEES){
             alert("บันทึกสำเร็จ")
-            this.$emit('backPage',{idMenu:menuId.UNIT});          
-        }else{
+            this.$emit("subPageUnit",{idPage:unitPageId.LISTUNIT});          
+        }else if(response.data == status.Duplicate){
             alert("หน่วยสินค้าซ้ำ")
+        }else if(response.data == status.ERROR){
+            alert("เกิดข้อผิดพลาด")
+            this.$emit("subPageUnit",{idPage:unitPageId.LISTUNIT});  
         }
       })
       //console.log(this.list)
@@ -39,6 +44,6 @@ methods: {
 
 </script>
 
-<style>
+<style scoped>
 
 </style>

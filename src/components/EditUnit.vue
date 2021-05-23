@@ -1,48 +1,60 @@
 <template>
   <div  class="text-center">
     <h1>แก้ไขหน่วยสินค้า</h1>
-    <input type="text" v-model="setNameEdit"/><br /><br />
-    <input type="hidden" v-model="idUnit">
+    <input type="text" v-model="nameEdit"/><br /><br />
     <b-button variant="success" @click="updateUnit()">บันทึก</b-button>
   </div>
 </template>
 
 <script>
-import { menuId } from "../utils/constant.js";
-export default {
+import { unitPageId } from "../utils/constant.js";
+import { status } from "../utils/constant.js";
+export default { 
   data() {
     return {
-     setNameEdit:""
+     nameEdit:"",
     };
   },
-  
+    mounted: function() {
+      this.dataEditUnit();
+  },
   props:[
-      "nameUnit",
       "idUnit"
   ],
   methods: {
+     dataEditUnit() {
+      this.axios
+        .post(
+          "http://localhost:40019/Unit/Edit_Unit_Page/?id=" +
+            this.idUnit
+        )
+        .then((response) => {
+           // console.log(response.data.unit1.nameUnit)
+            this.nameEdit = response.data.unit1.nameUnit
+
+        });
+    },
     updateUnit() { //updateUnit
-       this.objId = { IdUnit: this.idUnit,Name:this.setNameEdit}; //objId
-      //alert(id_unit)
-     // console.log(this.obj_id);
+      this.objId = { IdUnit:parseInt(this.idUnit),Name:this.nameEdit}; //objId
       this.axios
         .post("http://localhost:40019/Unit/Update_Unit", this.objId)
         .then((response) => {
-          if (response.data == "seccess") {
+          if (response.data == status.SUCCEES) {
             alert("แก้ไขข้อมูลสำเร็จ");
-            this.$emit('backPage',{idMenu:menuId.UNIT});    
-          } else if (response.data == "fail") {
+            this.$emit('backPage',{idPage:unitPageId.LISTUNIT});    
+          } else if (response.data == status.DUPLICATE) {
             alert("ข้อมูลสินค้าซ้ำ");
-          } else if (response.data == "null") {
-            alert("ข้อมูลนี้ถูกลบไปแล้ว");
-            this.$emit('backPage',{idMenu:menuId.UNIT});  
+          } else if (response.data == status.NULL) {
+            alert("ไม่พบข้อมูล");
+            this.$emit('backPage',{idPage:unitPageId.LISTUNIT});  
+          }else if (response.data == status.ERROR) {
+            alert("เกิดข้อผิดพลาด");
+            this.$emit('backPage',{idPage:unitPageId.LISTUNIT});  
           }
         });
     },
   },
-  mounted() {
-    this.setNameEdit = this.nameUnit
-  }
+
 };
 </script>
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-  <b-navbar toggleable="lg" type="dark" variant="dark">
+  <b-navbar toggleable="lg" type="dark" variant="dark" style="margin-left: auto;">
       <b-navbar-brand style="font-size:30px">Shop</b-navbar-brand>
 
     <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
@@ -9,13 +9,13 @@
       <b-navbar-nav>
 
         <b-nav-item 
-         v-on:click="numMenu(1)">รายการบิล</b-nav-item>
+         @click="numMenu(1)" style="font-size:20px">รายการบิล</b-nav-item>
 
         <b-nav-item 
-         v-on:click="numMenu(2)">หน่วยสินค้า</b-nav-item>
+         @click="numMenu(2)" style="font-size:20px">หน่วยสินค้า</b-nav-item>
 
         <b-nav-item  
-        v-on:click="numMenu(3)">สินค้า</b-nav-item>
+         @click="numMenu(3)" style="font-size:20px">สินค้า</b-nav-item>
 
       </b-navbar-nav>
     </b-collapse>
@@ -34,6 +34,8 @@ export default {
 }
 </script>
 
-<style>
-
+<style scoped>
+.navbar-brand {
+   margin-left: 1rem;
+}
 </style>

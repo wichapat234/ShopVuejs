@@ -15,14 +15,7 @@
         <tr>
           <th>หน่วยสินค้า</th>
           <td>
-            <select v-model="idUnit">
-              <option
-                v-for="list in dataUnit"
-                :key="list.idUnit"
-                :value="list.idUnit"
-                >{{ list.nameUnit }}</option
-              >
-            </select>
+          <b-form-select v-model="idUnit" :options="arrayDataUnit"></b-form-select>
           </td>
         </tr>
       </tbody>
@@ -36,26 +29,37 @@
 </template>
 
 <script>
-import {menuId} from  "../utils/constant.js";
+import {productPageId} from  "../utils/constant.js";
+import { status } from "../utils/constant.js";
 export default {
   data() {
     return {
-      dataUnit: [],
       nameProduct: "",
       idUnit: 0,
       productPrice: 0,
+      arrayDataUnit: [],
+      dataUnit:{value:"",text:""},
     };
+  },
+   mounted: function() {
+    this.dataEditProduct(); 
   },
   props: ["idProduct"],
   methods: {
     dataEditProduct() {
+      console.log(this.idProduct)
       this.axios
         .post(
           "http://localhost:40019/Product/Edit_Product_Page/?id=" +
             this.idProduct
         )
         .then((response) => {
-          this.dataUnit = response.data.unit;
+          console.log(response)
+           let countUnit = response.data.unit.length;
+           for(let i=0 ;i<countUnit;i++){
+            this.dataUnit ={value:response.data.unit[i].idUnit , text:response.data.unit[i].nameUnit}
+            this.arrayDataUnit.push(this.dataUnit)          
+          }
           this.nameProduct = response.data.nameProduct;
           this.productPrice = response.data.productPrice;
           this.idUnit = response.data.idUnit;
@@ -72,25 +76,26 @@ export default {
         .post("http://localhost:40019/Product/Update_Product", this.objProduct)
         .then((response) => {
             console.log(response)
-          if (response.data == "seccess") {
-            alert("บันทึกสำเร็จ]");
-            this.$emit("backPage",{idMenu:menuId.PRODUCT})
-          } else if (response.data == "fail") {
+          if (response.data == status.SUCCEES) {
+            alert("แก้ไขสินค้าสำเร็จ");
+            this.$emit("subPageProduct",{idPage:productPageId.LISTPRODUCT})
+          } else if (response.data == status.DUPLICATE) {
             alert("ข้อมูลสินค้าซ้ำ");
-          } else if (response.data == "null") {
-            alert("ข้อมูลนี้ถูกลบไปแล้ว");
-            this.$emit("backPage",{idMenu:menuId.PRODUCT})
+          } else if (response.data == status.NULL) {
+            alert("ไม่พบข้อมูล");
+            this.$emit("subPageProduct",{idPage:productPageId.LISTPRODUCT})
+          } else if (response.data == status.ERROR) {
+            alert("เกิดข้อผิดพลาด");
+            this.$emit('subPageProduct',{idPage:productPageId.LISTPRODUCT});  
           }
         });
     },
   },
-  mounted: function() {
-    this.dataEditProduct();
-  },
+ 
 };
 </script>
 
-<style>
+<style scoped>
 table {
   margin-left: auto;
   margin-right: auto;

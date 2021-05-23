@@ -14,18 +14,8 @@
         </tr>
         <tr>
           <th>หน่วยสินค้า</th>
-          <td>            
-            <b-form-select v-model="nameUnit" >
-              <b-form-select-option :value="0"
-              >เลือกหน่วยสินค้า</b-form-select-option
-              >
-              <b-form-select-option
-                v-for="list in dataUnit"
-                :key="list.idUnit"
-                :value="list.idUnit"
-                >{{ list.nameUnit }}</b-form-select-option
-              >
-            </b-form-select>
+          <td>    
+          <b-form-select v-model="nameUnit" :options="arrayDataUnit"></b-form-select>
           </td>
         </tr>
       </tbody>
@@ -39,24 +29,38 @@
 </template>
 
 <script>
-import { menuId } from "../utils/constant.js";
+import { productPageId } from "../utils/constant.js";
+import { status } from "../utils/constant.js";
 export default {
   data() {
     return {
-      dataUnit: [],
+      arrayDataUnit: [],
+      dataUnit:{value:"",text:""},
       nameProduct: "",
       nameUnit: 0,
       namePrice: 0,
       objProduct: {},
     };
+  }, 
+  mounted: function() {
+    this.listUnit();
   },
   methods: {
     listUnit() {
       this.axios
         .post("http://localhost:40019/Product/Add_Product_Page")
         .then((response) => {
-          this.dataUnit = response.data.unit;
           console.log(response);
+          let countUnit = response.data.unit.length
+          this.nameUnit = response.data.unit[0].idUnit;
+          for(let i=0 ;i<countUnit;i++){
+            this.dataUnit ={value:response.data.unit[i].idUnit , text:response.data.unit[i].nameUnit}
+            this.arrayDataUnit.push(this.dataUnit)          
+          }
+         // console.log( this.arrayDataUnit);
+        //  this.dataUnit ={value=}
+        //  this.dataUnit = {response.data.unit}
+          
         });
     },
     saveProduct() {
@@ -66,24 +70,26 @@ export default {
         IdUnit: this.nameUnit,
       };
       this.axios
-        .post("http://localhost:40019/Product/Insert_Product", this.objProduct)
+        .post("http://localhost:40019/Product/Insert_Product", this.LISTPRODUCT)
         .then((response) => {
-          if (response.data == "seccess") {
+          console.log(response.data)
+          if(response.data == status.SUCCEES) {
             alert("บันทึกสำเร็จ");
-            this.$emit("backPage", { idMenu: menuId.PRODUCT });
-          } else {
+            this.$emit("subPageProduct", { idPage: productPageId.LISTPRODUCT });
+          }else if(response.data == status.DUPLICATE){
             alert("หน่วยสินค้าซ้ำ");
-          }
+          }else if(response.data == status.ERROR){
+            alert("เกิดข้อผิดพลาด")
+            this.$emit('subPageProduct',{idPage:productPageId.LISTPRODUCT});  
+        }
         });
     },
   },
-  mounted: function() {
-    this.listUnit();
-  },
+
 };
 </script>
 
-<style>
+<style scoped>
 table {
   margin-left: auto;
   margin-right: auto;
