@@ -1,5 +1,6 @@
-export const menuId = {PRODUCT:3,UNIT:2,TRANSACTION:1}
-export const unitPageId = {ADDUNIT:1,EDITUNIT:2,LISTUNIT:3}
-export const productPageId = {ADDPRODUCT:1,EDITPRODUCT:2,LISTPRODUCT:3}
-export const transactionPageId = {LISTBILL:1,ADDBILL:2,DETAILBILL:3}
+// export const menuId = {PRODUCT:3,UNIT:2,TRANSACTION:1}
+export const pageManageData = {ADDUNIT:"addunit",EDITUNIT:"editunit",LISTUNIT:"listunit",
+                               ADDPRODUCT:"addproduct",EDITPRODUCT:"editproduct",LISTPRODUCT:"listproduct",DETAILPRODUCT:"detailproduct",
+                               LISTBILL:"listbill",ADDBILL:"addbill",DETAILBILL:"detailbill"}
 export const status = {SUCCEES:"Success",NULL:"Null",ERROR:"Error",DUPLICATE:"Duplicate"}
+export const localhost = "http://localhost:40019"

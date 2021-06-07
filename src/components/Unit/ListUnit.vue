@@ -1,7 +1,7 @@
 <template>
   <div class="text-center" id="tableUnit">
     
-    <h1>รายการหน่วยสินค้า</h1>
+    <h3>รายการหน่วยสินค้า</h3>
     <br />
     <b-button variant="info" v-on:click="addUnit()">เพิ่มหน่วยสินค้า</b-button>
     <br /><br />
@@ -13,8 +13,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for=" (list)  in dataUnit" :key="list.idUnit">
-          <td >{{list.nameUnit }}</td>
+        <tr v-for=" list in dataUnit" :key="list.idUnit">
+          <td >{{list.name }}</td>
           <td>
             <b-button variant="warning" v-on:click="editUnit(list.idUnit)">แก้ไข</b-button>&nbsp;
             <b-button variant="danger" v-on:click="deleteUnit(list.idUnit)">ลบ</b-button>
@@ -22,85 +22,65 @@
         </tr>
       </tbody>
     </table>
-
   </div>
 </template>
 
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
-import { unitPageId } from "../utils/constant.js"; 
-import { menuId } from "../utils/constant.js";
-import { status } from "../utils/constant.js";
-
+import { pageManageData } from "../../utils/constant.js"; 
+import { status } from "../../utils/constant.js";
 export default {
   name:"tableUnit",
   data() {
     return {
-      dataUnit: [],
-      unitPageId:unitPageId,
-      objId: {},
-      menuId:menuId,
-      idUnit:0,
-      nameUnit:"",
-      pageAddUnit:0,
-      component:'listUnit',
-      
-    };
+      pageManageData:pageManageData,
+    }; 
   },
    mounted: function() {
-    this.listUnit();
+     this.listUnit();
   },
   methods: {
     listUnit() {
-      //  alert("132");
-      this.axios
-        .post("http://localhost:40019/Unit/List_Unit")
-        .then((response) => {
-          this.dataUnit = response.data.unit;
-          console.log(response.data.unit);
-        });
+       this.$store.dispatch("unit/getDataUnit");
     },
-    addUnit() {
-    //  console.log(value)
-      this.$emit("subPageUnit",{idPage:unitPageId.ADDUNIT})
+    addUnit() {   
+       this.$store.commit('pageglobal/SET_PAGE', pageManageData.ADDUNIT);
     },
     deleteUnit(idUnit) {
-      this.objId = { IdUnit: idUnit };
-      this.axios
-        .post("http://localhost:40019/Unit/Delete", this.objId)
+     //  const objId = { IdUnit: parseInt(idUnit) };   
+      this.$store.dispatch("unit/deleteUnit",  parseInt(idUnit))
         .then((response) => {
-          if (response.data == status.SUCCEES) {
+          if (response == status.SUCCEES) {
             alert("ลบข้อมูลสำเร็จ");       
                this.listUnit();
-          } else if(response.data == status.NULL){
+          } else if(response == status.NULL){
             alert("ไม่พบข้อมูลนี้");
              this.listUnit();
-          }else if(response.data == status.ERROR){
+          }else if(response == status.ERROR){
             alert("เกิดข้อผิดพลาด");
              this.listUnit();
           }
         });
     },
     editUnit(value){
-         this.idUnit = value
-         this.objId = { IdUnit: this.idUnit };
-      this.axios
-        .post(
-          "http://localhost:40019/Unit/Check_Edit_Unit",
-          this.objId
-        )
+       //const objId = { IdUnit: parseInt(value) };
+       //console.log("v",value)
+        this.$store.commit('unit/SET_ID_UNIT',value);
+        this.$store.dispatch("unit/checkDataUnit",value) 
         .then((response) => {
           console.log(response)
-          if (response.data.status == status.SUCCEES) {
-            this.$emit("subPageUnit", {
-              idPage:unitPageId.EDITUNIT,
-              idUnit: response.data.id,
-            });
-          } else if(response.data == status.NULL) {
+          if (response == status.SUCCEES) {
+             this.$store.commit('pageglobal/SET_PAGE', pageManageData.EDITUNIT);
+          } else if(response == status.NULL) {
             alert("ไม่พบข้อมูลนี้");
             this.listProduct();
           }
         });
+    }
+  },
+  computed: {
+    dataUnit() {
+      return this.$store.state.unit.allDataUnit
     }
   },
  

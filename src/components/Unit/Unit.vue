@@ -1,17 +1,15 @@
 <template>
   <div> 
-    <ListUnit v-if="pageUnit == unitPageId.LISTUNIT" @subPageUnit="switcPageUnit"/>
-    <AddUnit v-if="pageUnit == unitPageId.ADDUNIT" @subPageUnit="switcPageUnit"/>
-    <EditUnit v-if="pageUnit == unitPageId.EDITUNIT" @subPageUnit="switcPageUnit" :idUnit="idUnit"/>
+    <ListUnit v-if="isListUnit"/>
+    <AddUnit v-else-if="isAddUnit"/>
+    <EditUnit v-else-if="isEditUnit"/>
   </div>
 </template>
-
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
-import { unitPageId } from "../utils/constant.js"; 
 import AddUnit from "./AddUnit.vue";
 import ListUnit from "./ListUnit.vue";
 import EditUnit from "./EditUnit.vue";
+import { pageManageData } from "../../utils/constant.js"; 
 
 export default {
    components: {
@@ -21,17 +19,22 @@ export default {
   },
   data() {
     return {
-      unitPageId:unitPageId,
-      pageUnit:3,
-      idUnit: 0,
     };
   },
+
   methods: {
-   switcPageUnit(value){
-     console.log(value)
-     this.pageUnit = value.idPage
-     this.idUnit = value.idUnit;
-   }
+
+  },
+  computed:{
+    isListUnit(){
+      return this.$store.state.pageglobal.pageName == pageManageData.LISTUNIT
+    },
+    isAddUnit(){
+      return this.$store.state.pageglobal.pageName == pageManageData.ADDUNIT
+    },
+    isEditUnit(){
+      return this.$store.state.pageglobal.pageName == pageManageData.EDITUNIT
+    }
 
   }
 };

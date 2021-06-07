@@ -1,6 +1,6 @@
 <template>
   <div class="text-center ">
-    <h1>เลือกสินค้า</h1>
+    <h3>เลือกสินค้า</h3>
     <br />
     <b-button variant="info" @click="addListBill(allData)"
       >เพิ่มรายการบิล</b-button
@@ -54,37 +54,25 @@
             ></b-form-select>
           </td>
           <td>{{ list.unitProduct }}</td>
-          <td>{{ list.unitPriceProduct }}</td>
+          <td>{{ list.unitPriceProduct.toFixed(2) }}</td>
           <td>
             <input
               v-model="list.countProduct"
+              @input="changeCount($event, list)"
               type="number"
-              @keyup="
-                calSumProduct({
-                  price: list.unitPriceProduct,
-                  count: list.countProduct,
-                  list: index,
-                })
-              "
             />
           </td>
-          <td>{{ list.sumPriceProduct }}</td>
+          <td>{{ getSumPriceProduct(list) }}</td>
           <td>
             <input
-              v-model="list.discountProduct"
+              :value="list.discountProduct"
+              @input="changeDiscount($event, list)"
               type="number"
-              @keyup="
-                sumBeforeDiscount({
-                  sumpPrice: list.sumPriceProduct,
-                  discount: list.discountProduct,
-                  list: index,
-                })
-              "
             />
           </td>
-          <td>{{ list.sumBeforeDiscount }}</td>
+          <td>{{ getSumAfterDiscount(list) }}</td>
           <td>
-            <b-button variant="danger" @click="deleteListProduct(index)"
+            <b-button variant="danger" @click="deleteListBill(index)"
               >ลบ</b-button
             >
           </td>
@@ -97,17 +85,17 @@
       <table>
         <tr>
           <th>ราคารวมก่อนส่วนลด :</th>
-          <th>{{ this.totalBefore }}</th>
+          <th>{{ outputBillBefore }}</th>
           <th>บาท</th>
         </tr>
         <tr>
           <th>ส่วนลดทั้งหมด :</th>
-          <th>{{ this.totalDiscount }}</th>
+          <th>{{ outputDiscount }}</th>
           <th>บาท</th>
         </tr>
         <tr>
           <th>ราคารวมทั้งหมด :</th>
-          <th>{{ this.totalAfter }}</th>
+          <th>{{ outputBillAfter }}</th>
           <th>บาท</th>
         </tr>
       </table>
@@ -119,39 +107,53 @@
 </template>
 
 <script>
-import { status } from "../utils/constant.js";
-import { transactionPageId } from "../utils/constant.js";
+import { status } from "../../utils/constant.js";
+import { pageManageData } from "../../utils/constant.js";
 export default {
   data() {
     return {
-      countid: 0,
-      showBody: 0,
       arrayDataProduct: [],
-      dataProduct: { value: "", text: "" },
       listData: [],
-      lengthData: 0,
       allData: [],
-      totalAfter: 0,
-      totalDiscount: 0,
-      totalBefore: 0,
       date: "",
-      dataListBill: {},
     };
   },
   mounted: function() {
     this.getDataProduct();
   },
   methods: {
+    changeCount($event, list){
+      const count = $event.target.value
+      if (count < 0) {
+        list.countProduct = 0;
+      }
+    },
+    changeDiscount($event, list) {
+      const discount = parseFloat($event.target.value);
+      if (discount > list.sumBeforeDiscount) {
+        list.discountProduct = list.sumBeforeDiscount;
+      } else if (discount < 0) {
+        list.discountProduct = 0;
+      } else {
+        list.discountProduct = discount;
+      }
+    },
+    getSumPriceProduct: function(list) {    
+      list.sumBeforeDiscount = list.unitPriceProduct * list.countProduct;
+      return list.sumBeforeDiscount;
+    },
+    getSumAfterDiscount(list) {
+      list.sumAfterDiscount = list.sumBeforeDiscount - list.discountProduct;
+      return list.sumAfterDiscount;
+    },
     saveListBill() {
-      //
       const arryDetail = [];
       let countTable = this.listData.length;
       for (let i = 0; i < countTable; i++) {
-        console.log("for:", this.listData[0].dataIdProduct);
         const idProduct = this.listData[i].dataIdProduct;
         const countProduct = this.listData[i].countProduct;
         const detailDiscountProduct = this.listData[i].discountProduct;
-        const detailTotalAfter = this.listData[i].sumPriceProduct;
+        const detailTotalAfter = this.listData[i].sumAfterDiscount;
         const detailTotalBefore = this.listData[i].sumBeforeDiscount;
         const allDetail = {
           IdProduct: parseInt(idProduct),
@@ -162,10 +164,9 @@ export default {
         };
         arryDetail.push(allDetail);
       }
-      console.log(arryDetail);
-      const totalBefore = this.totalBefore;
-      const totalDiscount = this.totalDiscount;
-      const totalAfter = this.totalAfter;
+      const totalBefore = this.outputBillBefore;
+      const totalDiscount = this.outputDiscount;
+      const totalAfter = this.outputBillAfter;
       const date = this.date;
       const allBill = {
         PriceBefore: parseFloat(totalBefore),
@@ -173,116 +174,94 @@ export default {
         PriceAfter: parseFloat(totalAfter),
         Date: date,
       };
-      this.dataListBill = { bill: allBill, detail: arryDetail };
-      console.log(this.dataListBill);
-
-      this.axios
-        .post(
-          "http://localhost:40019/Transaction/insert_detail_bill",
-          this.dataListBill
-        )
+      const dataListBill = { bill: allBill, detail: arryDetail };
+      this.$store.dispatch("transaction/saveListBill",dataListBill)
         .then((response) => {
-          // this.dataUnit = response.data.unit;
-          console.log(response);
           if (response.data.status == status.SUCCEES) {
-            this.$emit("subPageTransaction", {
-              idPage: transactionPageId.DETAILBILL,
-              idBill: response.data.idbill,
-            });
-          } else if (response.data == status.ERROR) {
+           this.$store.commit('transaction/SET_ID_Bill',response.data.idbill);
+           this.$store.commit('pageglobal/SET_PAGE', pageManageData.DETAILBILL);
+          } else if (response.data.status == status.ERROR) {
             alert("เกิดข้อผิดพลาด");
           }
         });
     },
     getDataProduct() {
-      this.axios
-        .post("http://localhost:40019/Transaction/GatdataProduct")
-        .then((response) => {
-          // this.dataUnit = response.data.unit;
-          console.log(response.data);
-          this.allData = response.data;
-          let countProduct = response.data.length;
-          this.lengthData = countProduct;
-          //   this.listData.dataIdProduct = response.data[0].product_Id;
+          this.allData = this.dataProduct;
+          let countProduct = this.dataProduct.length;
           for (let i = 0; i < countProduct; i++) {
-            this.dataProduct = {
-              value: response.data[i].product_Id,
-              text: response.data[i].nameProduct,
+            const dataProduct = {
+              value: this.dataProduct[i].idProduct,
+              text: this.dataProduct[i].nameProduct,
             };
-            this.arrayDataProduct.push(this.dataProduct);
+            this.arrayDataProduct.push(dataProduct);
           }
-        });
+        
     },
     addListBill(value) {
-      //console.log(value)
+      console.log("value",value)
       this.listData.push({
-        dataIdProduct: value[0].product_Id,
+        dataIdProduct: value[0].idProduct,
         unitProduct: value[0].nameUnit,
         unitPriceProduct: value[0].productPrice,
         countProduct: "",
-        sumPriceProduct: "",
+        sumBeforeDiscount: 0,
         discountProduct: "",
-        sumBeforeDiscount: "",
+        sumAfterDiscount: 0,
       });
     },
-    deleteListProduct(index) {
+    deleteListBill(index) {
       this.listData.splice(index, 1);
-      this.calSamBefore();
-      this.calSumDiscount();
-      this.calSumAfter();
     },
     changProduct(value) {
       let data;
       data = this.allData.find(
-        ({ product_Id }) => product_Id === value.idProduct
+        ({ idProduct }) => idProduct === value.idProduct
       );
       this.listData[value.list].unitProduct = data.nameUnit;
       this.listData[value.list].unitPriceProduct = data.productPrice;
-      this.listData[value.list].sumPriceProduct = 0;
+      this.listData[value.list].sumBeforeDiscount = 0;
       this.listData[value.list].sumAfterDiscount = 0;
-      this.listData[value.list].countProduct = "";
-      this.listData[value.list].discountProduct = "";
+      this.listData[value.list].countProduct = 0;
+      this.listData[value.list].discountProduct = 0;
     },
-    calSumProduct(value) {
-      let result = 0;
-      result = value.price * value.count;
-      this.listData[value.list].sumPriceProduct = result.toFixed(2);
-      this.calSamBefore();
+  },
+  computed: {
+    dataProduct() {
+      return this.$store.state.product.allDataProduct
     },
-    sumBeforeDiscount(value) {
-      let result;
-      result = value.sumpPrice - value.discount;
-      this.listData[value.list].sumBeforeDiscount = result.toFixed(2);
-      this.calSumDiscount();
-      this.calSumAfter();
-    },
-    calSamBefore() {
-      let result = 0;
+    outputBillBefore: function() {
       let countTable = this.listData.length;
-      for (let i = 0; i < countTable; i++) {
-        let data = this.listData[i].sumPriceProduct;
-        result += parseFloat(data);
-      }
-      this.totalBefore = result.toFixed(2);
-    },
-    calSumDiscount() {
       let result = 0;
-      let countTable = this.listData.length;
       for (let i = 0; i < countTable; i++) {
-        let data = this.listData[i].discountProduct;
-        result += parseFloat(data);
+        const resultDiscount = this.listData[i].sumBeforeDiscount;
+        result += parseFloat(resultDiscount);
       }
-      this.totalDiscount = result.toFixed(2);
+      return result;
     },
-    calSumAfter() {
-      let result = 0;
+    outputDiscount: function() {
       let countTable = this.listData.length;
+      let result = 0;
+      let resultBillBefore = 0;
       for (let i = 0; i < countTable; i++) {
-        let data = this.listData[i].sumBeforeDiscount;
-        // alert(data)
-        result += parseFloat(data);
+        resultBillBefore = this.listData[i].discountProduct;
+        if (resultBillBefore == "") {
+          resultBillBefore = 0;
+        }
+
+        result += parseFloat(resultBillBefore);
       }
-      this.totalAfter = result.toFixed(2);
+
+      return result;
+    },
+    outputBillAfter: function() {
+      let countTable = this.listData.length;
+      console.log(this.listData);
+      let result = 0;
+      for (let i = 0; i < countTable; i++) {
+        const resultAfterDiscount = this.listData[i].sumAfterDiscount;
+        result += parseFloat(resultAfterDiscount);
+      }
+      return result;
     },
   },
 };
@@ -304,8 +283,7 @@ export default {
   height: 80px;
 }
 .ft {
-  margin-left: 75rem;;
-
+  margin-left: 75rem;
 }
 .ft tr,
 .ft td,
